@@ -31,8 +31,9 @@
 {
 	if(self = [super init])
 	{
-		channel = -1;
+		channel = nil;
 		connection = nil;
+		isClosed = false;
 	}
 	
 	return self;
@@ -40,23 +41,34 @@
 - (void)dealloc
 {
 	[self close];
-	[connection release];
-	
-	[super dealloc];
+
 }
 
-- (void)openChannel:(unsigned int)theChannel onConnection:(AMQPConnection*)theConnection
+- (void)openChannel:(amqp_channel_t)theChannel onConnection:(AMQPConnection*)theConnection
 {
-	connection = [theConnection retain];
+	connection = theConnection;
 	channel = theChannel;
 	
 	amqp_channel_open(connection.internalConnection, channel);
-	
+
 	[connection checkLastOperation:@"Failed to open a channel"];
+
+	isClosed = false;
 }
 - (void)close
 {
-	amqp_channel_close(connection.internalConnection, channel, AMQP_REPLY_SUCCESS);
+	if (isClosed) {
+		return;
+	}
+
+	amqp_rpc_reply_t reply = amqp_channel_close(connection.internalConnection, channel, AMQP_REPLY_SUCCESS);
+
+	isClosed = true;
+
+	if(reply.reply_type != AMQP_RESPONSE_NORMAL)
+	{
+		[NSException raise:@"AMQPConnectionException" format:@"Unable to close channel: %@", [self errorDescriptionForReply:reply]];
+	}
 }
 
 @end

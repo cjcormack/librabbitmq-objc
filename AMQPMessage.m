@@ -56,7 +56,7 @@
 {
 	AMQPMessage *message = [[AMQPMessage alloc] initWithBody:theBody withDeliveryProperties:theDeliveryProperties withMessageProperties:theMessageProperties receivedAt:receiveTimestamp];
 	
-	return [message autorelease];
+	return message;
 }
 
 - (id)initWithBody:(amqp_bytes_t)theBody withDeliveryProperties:(amqp_basic_deliver_t*)theDeliveryProperties withMessageProperties:(amqp_basic_properties_t*)theMessageProperties receivedAt:(NSDate*)receiveTimestamp
@@ -127,26 +127,7 @@
 	
 	return self;
 }
-- (void)dealloc
-{
-	[body release];
-	[consumerTag release];
-	[exchangeName release];
-	[routingKey release];
-	[contentType release];
-	[contentEncoding release];
-	[correlationID release];
-	[replyToQueueName release];
-	[expiration release];
-	[messageID release];
-	[type release];
-	[userID release];
-	[appID release];
-	[clusterID release];
-	[receivedAt release];
-	
-	[super dealloc];
-}
+
 - (id)copyWithZone:(NSZone*)zone
 {
 	AMQPMessage *newMessage = [[AMQPMessage allocWithZone:zone] initWithAMQPMessage:self];

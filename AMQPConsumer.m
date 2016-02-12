@@ -38,10 +38,10 @@
 {
 	if(self = [super init])
 	{
-		channel = [theChannel retain];
-		queue = [theQueue retain];
+		channel = theChannel;
+		queue = theQueue;
 		
-		amqp_basic_consume_ok_t *response = amqp_basic_consume(channel.connection.internalConnection, channel.internalChannel, queue.internalQueue, AMQP_EMPTY_BYTES, !local, !ack, exclusive);
+		amqp_basic_consume_ok_t *response = amqp_basic_consume(channel.connection.internalConnection, channel.internalChannel, queue.internalQueue, AMQP_EMPTY_BYTES, !local, !ack, exclusive, amqp_empty_table);
 		[channel.connection checkLastOperation:@"Failed to start consumer"];
 		
 		consumer = amqp_bytes_malloc_dup(response->consumer_tag);
@@ -52,10 +52,7 @@
 - (void)dealloc
 {
 	amqp_bytes_free(consumer);
-	[channel release];
-	[queue release];
-	
-	[super dealloc];
+
 }
 
 - (AMQPMessage*)pop

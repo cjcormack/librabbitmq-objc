@@ -21,6 +21,7 @@
 
 # import <amqp.h>
 # import <amqp_framing.h>
+# import <amqp_tcp_socket.h>
 # import <unistd.h>
 
 # import "AMQPChannel.h"
@@ -35,6 +36,7 @@
 	{
 		connection = amqp_new_connection();
 		nextChannel = 1;
+		isDisconnected = false;
 	}
 	
 	return self;
@@ -42,27 +44,23 @@
 - (void)dealloc
 {
 	[self disconnect];
-	
-	amqp_destroy_connection(connection);
-	
-	[super dealloc];
 }
 
 - (void)connectToHost:(NSString*)host onPort:(int)port
 {
-	socketFD = amqp_open_socket([host UTF8String], port);
-	
-	if(socketFD < 0)
-	{
+	socketFD = amqp_tcp_socket_new(connection);
+
+	int status = amqp_socket_open(socketFD, [host UTF8String], port);
+	if (status) {
 		[NSException raise:@"AMQPConnectionException" format:@"Unable to open socket to host %@ on port %d", host, port];
 	}
 
-	amqp_set_sockfd(connection, socketFD);
+	isDisconnected = false;
 }
 - (void)loginAsUser:(NSString*)username withPasswort:(NSString*)password onVHost:(NSString*)vhost
 {
 	amqp_rpc_reply_t reply = amqp_login(connection, [vhost UTF8String], 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, [username UTF8String], [password UTF8String]);
-	
+
 	if(reply.reply_type != AMQP_RESPONSE_NORMAL)
 	{
 		[NSException raise:@"AMQPLoginException" format:@"Failed to login to server as user %@ on vhost %@ using password %@: %@", username, vhost, password, [self errorDescriptionForReply:reply]];
@@ -70,14 +68,23 @@
 }
 - (void)disconnect
 {
+	if (isDisconnected) {
+		return;
+	}
 	amqp_rpc_reply_t reply = amqp_connection_close(connection, AMQP_REPLY_SUCCESS);
+
+	isDisconnected = true;
 	
 	if(reply.reply_type != AMQP_RESPONSE_NORMAL)
 	{
 		[NSException raise:@"AMQPConnectionException" format:@"Unable to disconnect from host: %@", [self errorDescriptionForReply:reply]];
 	}
-	
-	close(socketFD);
+
+	int destroyReply = amqp_destroy_connection(connection);
+
+	if (destroyReply != 0) {
+		[NSException raise:@"AMQPConnectionException" format:@"Non-zero response destroying the AMQP connection (%d)", destroyReply];
+	}
 }
 
 - (void)checkLastOperation:(NSString*)context
@@ -97,7 +104,7 @@
 	
 	nextChannel++;
 
-	return [channel autorelease];
+	return channel;
 }
 
 @end

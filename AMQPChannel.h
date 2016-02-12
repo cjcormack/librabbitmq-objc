@@ -29,6 +29,7 @@
 {
 	amqp_channel_t channel;
 	AMQPConnection *connection;
+	bool isClosed;
 }
 
 @property (readonly) amqp_channel_t internalChannel;
@@ -37,7 +38,7 @@
 - (id)init;
 - (void)dealloc;
 
-- (void)openChannel:(unsigned int)theChannel onConnection:(AMQPConnection*)theConnection;
+- (void)openChannel:(amqp_channel_t)theChannel onConnection:(AMQPConnection*)theConnection;
 - (void)close;
 
 @end

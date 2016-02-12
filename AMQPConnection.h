@@ -28,9 +28,10 @@
 @interface AMQPConnection : AMQPObject
 {
 	amqp_connection_state_t connection;
-	int socketFD;
+	amqp_socket_t *socketFD;
 	
-	unsigned int nextChannel;
+	amqp_channel_t nextChannel;
+	BOOL isDisconnected;
 }
 
 @property (readonly) amqp_connection_state_t internalConnection;

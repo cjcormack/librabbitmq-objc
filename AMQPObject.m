@@ -39,9 +39,9 @@
 			break;
 			
 		case AMQP_RESPONSE_LIBRARY_EXCEPTION:
-			if(reply.library_errno)
+			if(reply.library_error)
 			{
-				return [NSString stringWithUTF8String:strerror(reply.library_errno)];
+				return [NSString stringWithUTF8String:strerror(reply.library_error)];
 			}
 			else
 			{

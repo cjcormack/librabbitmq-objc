@@ -34,7 +34,7 @@
 	NSObject<AMQPConsumerThreadDelegate> *delegate;
 }
 
-@property (assign) NSObject<AMQPConsumerThreadDelegate> *delegate;
+@property (strong) NSObject<AMQPConsumerThreadDelegate> *delegate;
 
 - (id)initWithConsumer:(AMQPConsumer*)theConsumer;
 - (void)dealloc;
